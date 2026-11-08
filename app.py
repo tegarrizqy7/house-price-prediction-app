@@ -32,16 +32,23 @@ with col2:
     grade = st.slider("Grade Konstruksi (1-13)", 1, 13, 7)
 
 if st.button("🔮 Hitung Estimasi Harga"):
-    # Membuat dataframe dengan urutan kolom yang aman
-    input_data = pd.DataFrame([[bedrooms, bathrooms, sqft_living, floors, waterfront, view, condition, grade]],
-                              columns=['bedrooms', 'bathrooms', 'sqft_living', 'floors', 'waterfront', 'view', 'condition', 'grade'])
-    
+    # Cek berapa jumlah fitur yang dibutuhkan oleh scaler/model Anda saat ini
     try:
-        # Jika scaler menggunakan feature names dari training
-        input_scaled = scaler.transform(input_data)
-    except Exception:
-        # Fallback jika scaler hanya menerima array mentah
-        input_scaled = scaler.transform(input_data.values)
-        
+        n_features = scaler.n_features_in_
+    except AttributeError:
+        n_features = 8  # Default jika atribut tidak ditemukan
+
+    # Menyesuaikan input dengan jumlah fitur yang diminta model
+    if n_features == 8:
+        input_data = [[bedrooms, bathrooms, sqft_living, floors, waterfront, view, condition, grade]]
+    else:
+        # Jika model butuh lebih banyak fitur (misal hasil dari OneHotEncoding), 
+        # kita lengkapi sisanya dengan nilai 0 agar tidak error
+        base_input = [bedrooms, bathrooms, sqft_living, floors, waterfront, view, condition, grade]
+        input_data = [base_input + [0] * (n_features - len(base_input))]
+
+    # Transform dan Prediksi
+    input_scaled = scaler.transform(input_data)
     prediction = model.predict(input_scaled)[0]
+    
     st.success(f"💰 **Estimasi Harga Rumah:** ${prediction:,.2f}")
