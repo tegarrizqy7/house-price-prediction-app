@@ -6,7 +6,7 @@ import joblib
 st.set_page_config(page_title="Prediksi Harga Rumah King County", page_icon="🏠")
 
 st.title("🏠 Prediksi Harga Rumah King County")
-st.write("Aplikasi Machine Learning untuk memprediksi harga rumah di King County (Tugas Besar Part 3).")
+st.write("Aplikasi Machine Learning untuk memprediksi harga rumah di King County.")
 
 @st.cache_resource
 def load_model():
@@ -29,11 +29,19 @@ with col2:
     waterfront = st.selectbox("Pemandangan Danau", [0, 1], format_func=lambda x: "Ya" if x==1 else "Tidak")
     view = st.slider("Kualitas View (0-4)", 0, 4, 0)
     condition = st.slider("Kondisi Rumah (1-5)", 1, 5, 3)
-    grade = st.slider("Grade Kontruksi (1-13)", 1, 13, 7)
+    grade = st.slider("Grade Konstruksi (1-13)", 1, 13, 7)
 
 if st.button("🔮 Hitung Estimasi Harga"):
+    # Membuat dataframe dengan urutan kolom yang aman
     input_data = pd.DataFrame([[bedrooms, bathrooms, sqft_living, floors, waterfront, view, condition, grade]],
                               columns=['bedrooms', 'bathrooms', 'sqft_living', 'floors', 'waterfront', 'view', 'condition', 'grade'])
-    input_scaled = scaler.transform(input_data)
+    
+    try:
+        # Jika scaler menggunakan feature names dari training
+        input_scaled = scaler.transform(input_data)
+    except Exception:
+        # Fallback jika scaler hanya menerima array mentah
+        input_scaled = scaler.transform(input_data.values)
+        
     prediction = model.predict(input_scaled)[0]
     st.success(f"💰 **Estimasi Harga Rumah:** ${prediction:,.2f}")
